@@ -1,26 +1,27 @@
+import "@/index.css";
 import React, { createContext, useEffect, useState } from "react";
-import { Route, Router, Routes, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import { Provider, useDispatch, useSelector } from "react-redux";
-import { store } from "@/store";
-import { clearUser, setUser } from "@/store/userSlice";
-import Login from "@/components/pages/Login";
-import Signup from "@/components/pages/Signup";
-import Callback from "@/components/pages/Callback";
-import ErrorPage from "@/components/pages/ErrorPage";
-import ResetPassword from "@/components/pages/ResetPassword";
-import PromptPassword from "@/components/pages/PromptPassword";
-import "@/index.css";
 import Layout from "@/components/organisms/Layout";
+import Callback from "@/components/pages/Callback";
 import Dashboard from "@/components/pages/Dashboard";
+import ErrorPage from "@/components/pages/ErrorPage";
+import Login from "@/components/pages/Login";
 import Products from "@/components/pages/Products";
+import PromptPassword from "@/components/pages/PromptPassword";
 import QuickUpdate from "@/components/pages/QuickUpdate";
+import ResetPassword from "@/components/pages/ResetPassword";
+import Signup from "@/components/pages/Signup";
+import { store } from "@/store/index";
+import { clearUser, setUser } from "@/store/userSlice";
 
 // Create auth context
 export const AuthContext = createContext(null);
 
-const AppContent = () => {
+function AppContent() {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const [isInitialized, setIsInitialized] = useState(false);
   const [searchValue, setSearchValue] = useState("");
@@ -99,7 +100,7 @@ const AppContent = () => {
         setIsInitialized(true);
       }
     });
-  }, []);
+  }, [navigate, dispatch]);
   
   // Authentication methods to share via context
   const authMethods = {
@@ -117,37 +118,58 @@ const AppContent = () => {
   };
 
   const getPageConfig = () => {
-    const location = window.location;
     const path = location.pathname;
-    
     switch (path) {
-      case "/":
-        return { title: "Dashboard", showSearch: false, addButtonLabel: null };
-      case "/products":
-        return { title: "Products", showSearch: true, addButtonLabel: "Add Product" };
-      case "/quick-update":
-        return { title: "Quick Update", showSearch: false, addButtonLabel: null };
+      case '/':
+        return {
+          title: 'Dashboard',
+          showSearch: false,
+          addButtonLabel: null
+        };
+      case '/products':
+        return {
+          title: 'Products',
+          showSearch: true,
+          addButtonLabel: 'Add Product'
+        };
+      case '/quick-update':
+        return {
+          title: 'Quick Stock Update',
+          showSearch: false,
+          addButtonLabel: null
+        };
       default:
-        return { title: "StockFlow", showSearch: false, addButtonLabel: null };
+        return {
+          title: 'StockFlow',
+          showSearch: false,
+          addButtonLabel: null
+        };
     }
   };
 
   const handleSearchChange = (e) => {
     setSearchValue(e.target.value);
   };
-
+  
   // Don't render routes until initialization is complete
   if (!isInitialized) {
     return (
       <div className="loading flex items-center justify-center p-6 h-screen w-full">
         <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 2v4"></path><path d="m16.2 7.8 2.9-2.9"></path><path d="M18 12h4"></path><path d="m16.2 16.2 2.9 2.9"></path><path d="M12 18v4"></path><path d="m4.9 19.1 2.9-2.9"></path><path d="M2 12h4"></path><path d="m4.9 4.9 2.9 2.9"></path>
+          <path d="M12 2v4"></path>
+          <path d="m16.2 7.8 2.9-2.9"></path>
+          <path d="M18 12h4"></path>
+          <path d="m16.2 16.2 2.9 2.9"></path>
+          <path d="M12 18v4"></path>
+          <path d="m4.9 19.1 2.9-2.9"></path>
+          <path d="M2 12h4"></path>
+          <path d="m4.9 4.9 2.9 2.9"></path>
         </svg>
       </div>
     );
   }
 
-  // If not authenticated, show auth routes
+  // Show authentication pages when user is not authenticated
   if (!isAuthenticated) {
     return (
       <AuthContext.Provider value={authMethods}>
@@ -166,7 +188,8 @@ const AppContent = () => {
 
   const pageConfig = getPageConfig();
 
-return (
+  // Show authenticated app
+  return (
     <AuthContext.Provider value={authMethods}>
       <Layout
         title={pageConfig.title}
@@ -183,16 +206,16 @@ return (
       </Layout>
     </AuthContext.Provider>
   );
-};
+}
 
-const App = () => {
+function App() {
   return (
     <Provider store={store}>
-      <Router>
+      <BrowserRouter>
         <AppContent />
         <ToastContainer
           position="top-right"
-          autoClose={3000}
+          autoClose={4000}
           hideProgressBar={false}
           newestOnTop={false}
           closeOnClick
@@ -201,11 +224,10 @@ const App = () => {
           draggable
           pauseOnHover
           theme="light"
-          style={{ zIndex: 9999 }}
         />
-      </Router>
+      </BrowserRouter>
     </Provider>
   );
-};
+}
 
 export default App;
