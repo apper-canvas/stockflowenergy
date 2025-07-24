@@ -32,28 +32,15 @@ const Dashboard = () => {
     loadProducts();
   }, []);
 
-  const handleStockAdjust = async (productId, type, quantity, notes = "") => {
+const handleStockAdjust = async (productId, type, quantity, notes = "") => {
     try {
-      const product = products.find(p => p.Id === productId);
-      if (!product) return;
-
-      const newStock = type === "add" 
-        ? product.currentStock + quantity 
-        : Math.max(0, product.currentStock - quantity);
-
-      const updatedProduct = {
-        ...product,
-        currentStock: newStock,
-        lastUpdated: new Date().toISOString()
-      };
-
-      await productService.update(productId, updatedProduct);
-      
-      setProducts(prev => prev.map(p => 
-        p.Id === productId ? updatedProduct : p
-      ));
-
-      toast.success(`Stock ${type === "add" ? "increased" : "decreased"} by ${quantity} units`);
+      const updatedProduct = await productService.adjustStock(productId, type, quantity, notes);
+      if (updatedProduct) {
+        setProducts(prev => prev.map(p => 
+          p.Id === productId ? updatedProduct : p
+        ));
+        toast.success(`Stock ${type === "add" ? "increased" : "decreased"} by ${quantity} units`);
+      }
     } catch (err) {
       toast.error("Failed to update stock level");
       console.error("Error updating stock:", err);

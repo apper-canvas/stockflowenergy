@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useState, useContext } from "react";
+import { useSelector } from 'react-redux';
+import { AuthContext } from '@/App';
 import { motion } from "framer-motion";
 import SearchBar from "@/components/molecules/SearchBar";
 import Button from "@/components/atoms/Button";

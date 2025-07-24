@@ -7,7 +7,7 @@ import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
 import Button from "@/components/atoms/Button";
 import ApperIcon from "@/components/ApperIcon";
-import { productService } from "@/services/api/productService";
+import { productService } from "@/services/api/productService"; 
 import { toast } from "react-toastify";
 
 const Products = ({ searchValue, onAddClick }) => {
@@ -57,22 +57,27 @@ const Products = ({ searchValue, onAddClick }) => {
     setIsModalOpen(true);
   };
 
-  const handleSaveProduct = async (productData) => {
+const handleSaveProduct = async (productData) => {
     try {
       setModalLoading(true);
       
       if (editingProduct) {
         const updatedProduct = await productService.update(editingProduct.Id, productData);
-        setProducts(prev => prev.map(p => p.Id === editingProduct.Id ? updatedProduct : p));
-        toast.success("Product updated successfully!");
+        if (updatedProduct) {
+          setProducts(prev => prev.map(p => p.Id === editingProduct.Id ? updatedProduct : p));
+          toast.success("Product updated successfully!");
+          setIsModalOpen(false);
+          setEditingProduct(null);
+        }
       } else {
         const newProduct = await productService.create(productData);
-        setProducts(prev => [...prev, newProduct]);
-        toast.success("Product added successfully!");
+        if (newProduct) {
+          setProducts(prev => [...prev, newProduct]);
+          toast.success("Product added successfully!");
+          setIsModalOpen(false);
+          setEditingProduct(null);
+        }
       }
-      
-      setIsModalOpen(false);
-      setEditingProduct(null);
     } catch (err) {
       toast.error(editingProduct ? "Failed to update product" : "Failed to add product");
       console.error("Error saving product:", err);
@@ -81,43 +86,32 @@ const Products = ({ searchValue, onAddClick }) => {
     }
   };
 
-  const handleDeleteProduct = async (productId) => {
+const handleDeleteProduct = async (productId) => {
     if (!window.confirm("Are you sure you want to delete this product?")) {
       return;
     }
 
     try {
-      await productService.delete(productId);
-      setProducts(prev => prev.filter(p => p.Id !== productId));
-      toast.success("Product deleted successfully!");
+      const success = await productService.delete(productId);
+      if (success) {
+        setProducts(prev => prev.filter(p => p.Id !== productId));
+        toast.success("Product deleted successfully!");
+      }
     } catch (err) {
       toast.error("Failed to delete product");
       console.error("Error deleting product:", err);
     }
   };
 
-  const handleStockAdjust = async (productId, type, quantity, notes = "") => {
+const handleStockAdjust = async (productId, type, quantity, notes = "") => {
     try {
-      const product = products.find(p => p.Id === productId);
-      if (!product) return;
-
-      const newStock = type === "add" 
-        ? product.currentStock + quantity 
-        : Math.max(0, product.currentStock - quantity);
-
-      const updatedProduct = {
-        ...product,
-        currentStock: newStock,
-        lastUpdated: new Date().toISOString()
-      };
-
-      await productService.update(productId, updatedProduct);
-      
-      setProducts(prev => prev.map(p => 
-        p.Id === productId ? updatedProduct : p
-      ));
-
-      toast.success(`Stock ${type === "add" ? "increased" : "decreased"} by ${quantity} units`);
+      const updatedProduct = await productService.adjustStock(productId, type, quantity, notes);
+      if (updatedProduct) {
+        setProducts(prev => prev.map(p => 
+          p.Id === productId ? updatedProduct : p
+        ));
+        toast.success(`Stock ${type === "add" ? "increased" : "decreased"} by ${quantity} units`);
+      }
     } catch (err) {
       toast.error("Failed to update stock level");
       console.error("Error updating stock:", err);
